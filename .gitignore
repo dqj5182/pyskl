@@ -115,7 +115,7 @@ work_dirs/
 *.mdb
 
 # avoid soft links created by MIM
-pyskl/configs/*
+pyskl/assets/*
 pyskl/tools/*
 
 # unignore ipython notebook files in demo
@@ -127,6 +127,5 @@ tmp/*
 examples/extract_diving48_skeleton/*json
 examples/extract_diving48_skeleton/*list
 examples/extract_diving48_skeleton/*pkl
-configs/gen_config.ipynb
 dev.ipynb
 test.ipynb

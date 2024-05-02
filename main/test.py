@@ -44,7 +44,7 @@ def main():
     args.eval = ['top_k_accuracy', 'mean_class_accuracy']
     args.out = 'result.pkl'
 
-    config_path = 'configs/posec3d/slowonly_r50_gym/joint.py'
+    config_path = 'assets/posec3d/slowonly_r50_gym/joint.py'
     cfg = Config.fromfile(config_path)
 
     out = osp.join(cfg.work_dir, 'result.pkl')
