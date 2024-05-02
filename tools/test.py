@@ -17,11 +17,7 @@ from pyskl.utils import cache_checkpoint
 def parse_args():
     parser = argparse.ArgumentParser(
         description='pyskl test (and eval) a model')
-    parser.add_argument('-C', '--checkpoint', help='checkpoint file', default=None)
-    parser.add_argument(
-        '--out',
-        default=None,
-        help='output result file in pkl/yaml/json format')
+    parser.add_argument('--checkpoint', help='checkpoint file', default=None)
     args = parser.parse_args()
     return args
 
@@ -46,6 +42,7 @@ def main():
 
     args.launcher = 'pytorch'
     args.eval = ['top_k_accuracy', 'mean_class_accuracy']
+    args.out = 'result.pkl'
 
     config_path = 'configs/posec3d/slowonly_r50_gym/joint.py'
     cfg = Config.fromfile(config_path)

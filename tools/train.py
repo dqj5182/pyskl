@@ -62,10 +62,6 @@ def main():
 
     cfg = Config.fromfile(args.config)
 
-    # set cudnn_benchmark
-    if cfg.get('cudnn_benchmark', False):
-        torch.backends.cudnn.benchmark = True
-
     # work_dir is determined in this priority:
     # config file > default (base filename)
     if cfg.get('work_dir', None) is None:
@@ -119,8 +115,6 @@ def main():
     meta['work_dir'] = osp.basename(cfg.work_dir.rstrip('/\\'))
 
     model = build_model(cfg.model)
-    if dv(torch.__version__) >= dv('2.0.0') and args.compile:
-        model = torch.compile(model)
 
     datasets = [build_dataset(cfg.data.train)]
 
@@ -135,29 +129,10 @@ def main():
 
     test_option = dict(test_last=args.test_last, test_best=args.test_best)
 
-    default_mc_cfg = ('localhost', 22077)
-    memcached = cfg.get('memcached', False)
-
-    if rank == 0 and memcached:
-        # mc_list is a list of pickle files you want to cache in memory.
-        # Basically, each pickle file is a dictionary.
-        mc_cfg = cfg.get('mc_cfg', default_mc_cfg)
-        assert isinstance(mc_cfg, tuple) and mc_cfg[0] == 'localhost'
-        if not test_port(mc_cfg[0], mc_cfg[1]):
-            mc_on(port=mc_cfg[1], launcher=args.launcher)
-        retry = 3
-        while not test_port(mc_cfg[0], mc_cfg[1]) and retry > 0:
-            time.sleep(5)
-            retry -= 1
-        assert retry >= 0, 'Failed to launch memcached. '
-
     dist.barrier()
 
     train_model(model, datasets, cfg, validate=args.validate, test=test_option, timestamp=timestamp, meta=meta)
     dist.barrier()
-
-    if rank == 0 and memcached:
-        mc_off()
 
 
 if __name__ == '__main__':

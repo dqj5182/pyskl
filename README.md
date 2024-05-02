@@ -33,33 +33,19 @@ bash tools/dist_test.sh {config_name} {checkpoint} {num_gpus} --out {output_file
 For example,
 ```shell
 # Training
-bash tools/dist_train.sh configs/posec3d/slowonly_r50_gym/joint.py 2 --validate --test-last --test-best
+CUDA_VISIBLE_DEVICES=2 bash tools/dist_train.sh configs/posec3d/slowonly_r50_gym/joint.py 1 --validate --test-last --test-best
 
 # Testing
-bash tools/dist_test.sh configs/posec3d/slowonly_r50_gym/joint.py checkpoints/FineGYM/SlowOnly-R50/joint.pth 1 --eval top_k_accuracy mean_class_accuracy --out result.pkl
+CUDA_VISIBLE_DEVICES=0 bash tools/dist_test.sh configs/posec3d/slowonly_r50_gym/joint.py checkpoints/FineGYM/SlowOnly-R50/joint.pth 1 --eval top_k_accuracy mean_class_accuracy --out result.pkl
 ```
 
 or without distributed,
 ```shell
 # Training
-python train.py 
+CUDA_VISIBLE_DEVICES=0 python -m torch.distributed.launch --nproc_per_node=1 --master_port=30200 tools/train.py configs/posec3d/slowonly_r50_gym/joint.py --launcher pytorch --validate --test-last --test-best
 
 # Testing
-python tools/test.py -checkpoint checkpoints/FineGYM/SlowOnly-R50/joint.pth --out result.pkl
-```
-
-## Citation
-
-If you use PYSKL in your research or wish to refer to the baseline results published in the Model Zoo, please use the following BibTeX entry and the BibTex entry corresponding to the specific algorithm you used.
-
-```BibTeX
-@inproceedings{duan2022pyskl,
-  title={Pyskl: Towards good practices for skeleton action recognition},
-  author={Duan, Haodong and Wang, Jiaqi and Chen, Kai and Lin, Dahua},
-  booktitle={Proceedings of the 30th ACM International Conference on Multimedia},
-  pages={7351--7354},
-  year={2022}
-}
+CUDA_VISIBLE_DEVICES=0 python tools/test.py --checkpoint checkpoints/FineGYM/SlowOnly-R50/joint.pth
 ```
 
 ## Acknowledgement
