@@ -26,13 +26,7 @@ def main():
     args.config = 'configs/posec3d/slowonly_r50_gym/joint.py'
 
     cfg = Config.fromfile(args.config)
-
-    if cfg.get('work_dir', None) is None:
-        cfg.work_dir = osp.join('./work_dirs', osp.splitext(osp.basename(args.config))[0])
-
-    if not hasattr(cfg, 'dist_params'):
-        cfg.dist_params = dict(backend='nccl')
-
+    cfg.dist_params = dict(backend='nccl')
     cfg.gpu_ids = range(1)
 
     auto_resume = cfg.get('auto_resume', True)
@@ -78,10 +72,9 @@ def main():
     cfg.workflow = cfg.get('workflow', [('train', 1)])
     assert len(cfg.workflow) == 1
 
-    if cfg.checkpoint_config is not None:
-        cfg.checkpoint_config.meta = dict(
-            pyskl_version=__version__ + get_git_hash(digits=7),
-            config=cfg.pretty_text)
+    cfg.checkpoint_config.meta = dict(
+        pyskl_version=__version__ + get_git_hash(digits=7),
+        config=cfg.pretty_text)
 
     test_option = dict(test_last=True, test_best=True)
 
