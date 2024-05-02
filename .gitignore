@@ -97,7 +97,6 @@ venv.bak/
 .mypy_cache/
 
 # custom
-/data
 .vscode
 .idea
 *.pkl
