@@ -33,9 +33,6 @@ def parse_args():
         help='evaluation metrics, which depends on the dataset, e.g.,'
         ' "top_k_accuracy", "mean_class_accuracy" for video dataset')
     parser.add_argument(
-        '--tmpdir',
-        help='tmp directory used for collecting results from multiple workers')
-    parser.add_argument(
         '--launcher',
         choices=['pytorch', 'slurm'],
         default='pytorch',
@@ -60,13 +57,15 @@ def inference_pytorch(args, cfg, data_loader):
     load_checkpoint(model, args.checkpoint, map_location='cpu')
 
     model = MMDataParallel(model.cuda(cfg.gpu_ids[0]), device_ids=cfg.gpu_ids)
-    outputs = multi_gpu_test(model, data_loader, args.tmpdir)
+    outputs = multi_gpu_test(model, data_loader, None)
 
     return outputs
 
 
 def main():
     args = parse_args()
+
+    args.launcher = 'pytorch'
 
     cfg = Config.fromfile(args.config)
 

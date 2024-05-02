@@ -45,7 +45,7 @@ or without distributed,
 python train.py 
 
 # Testing
-python tools/test.py configs/posec3d/slowonly_r50_gym/joint.py --checkpoint checkpoints/FineGYM/SlowOnly-R50/joint.pth --eval top_k_accuracy mean_class_accuracy --out result.pkl
+python -m torch.distributed.launch --nproc_per_node=1 --master_port=19911 tools/test.py configs/posec3d/slowonly_r50_gym/joint.py -C checkpoints/FineGYM/SlowOnly-R50/joint.pth --launcher pytorch --eval top_k_accuracy mean_class_accuracy --out result.pkl
 ```
 
 ## Citation
