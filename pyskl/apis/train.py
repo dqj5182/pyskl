@@ -6,7 +6,7 @@ import time
 import torch
 import torch.distributed as dist
 from mmcv.engine import multi_gpu_test
-from mmcv.parallel import MMDistributedDataParallel
+from mmcv.parallel import MMDistributedDataParallel, MMDataParallel
 from mmcv.runner import DistSamplerSeedHook, EpochBasedRunner, OptimizerHook, build_optimizer, get_dist_info
 
 from ..core import DistEvalHook
@@ -88,13 +88,8 @@ def train_model(model,
 
     # put model on gpus
     find_unused_parameters = cfg.get('find_unused_parameters', True)
-    # Sets the `find_unused_parameters` parameter in
-    # torch.nn.parallel.DistributedDataParallel
-    model = MMDistributedDataParallel(
-        model.cuda(),
-        device_ids=[torch.cuda.current_device()],
-        broadcast_buffers=False,
-        find_unused_parameters=find_unused_parameters)
+
+    model = MMDataParallel(model.cuda(cfg.gpu_ids[0]), device_ids=cfg.gpu_ids)
 
     # build runner
     optimizer = build_optimizer(model, cfg.optimizer)

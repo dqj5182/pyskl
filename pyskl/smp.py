@@ -141,7 +141,7 @@ def gen_bash(cfgs, num_gpus, gpus_per_task=1):
             gpu_ids = ','.join([str(x) for x in gpu_ids])
             cmds.append(
                 f'CUDA_VISIBLE_DEVICES={gpu_ids} PORT={port} bash tools/dist_train.sh {c} {gpus_per_task} '
-                '--validate --test-last --test-best'
+                '--validate --test_last --test_best'
             )
         cmds_main.append('  &&  '.join(cmds) + '  &')
     timestamp = time.strftime('%m%d%H%M%S', time.localtime())

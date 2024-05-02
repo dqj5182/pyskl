@@ -5,9 +5,8 @@ import mmcv
 import os
 import os.path as osp
 import time
-import torch.distributed as dist
 from mmcv import Config
-from mmcv.runner import get_dist_info, init_dist, set_random_seed
+from mmcv.runner import set_random_seed
 from mmcv.utils import get_git_hash
 
 from pyskl import __version__
@@ -19,38 +18,7 @@ from pyskl.utils import collect_env, get_root_logger
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Train a recognizer')
-    parser.add_argument('config', help='train config file path')
-    parser.add_argument(
-        '--validate',
-        action='store_true',
-        help='whether to evaluate the checkpoint during training')
-    parser.add_argument(
-        '--test-last',
-        action='store_true',
-        help='whether to test the checkpoint after training')
-    parser.add_argument(
-        '--test-best',
-        action='store_true',
-        help='whether to test the best checkpoint (if applicable) after training')
-    parser.add_argument('--seed', type=int, default=None, help='random seed')
-    parser.add_argument(
-        '--deterministic',
-        action='store_true',
-        help='whether to set deterministic options for CUDNN backend.')
-    parser.add_argument(
-        '--launcher',
-        choices=['pytorch', 'slurm'],
-        default='pytorch',
-        help='job launcher')
-    parser.add_argument(
-        '--compile',
-        action='store_true',
-        help='whether to compile the model before training / testing (only available in pytorch 2.0)')
-    parser.add_argument('--local_rank', type=int, default=-1)
-    parser.add_argument('--local-rank', type=int, default=-1)
     args = parser.parse_args()
-    if 'LOCAL_RANK' not in os.environ:
-        os.environ['LOCAL_RANK'] = str(args.local_rank)
 
     return args
 
@@ -58,20 +26,23 @@ def parse_args():
 def main():
     args = parse_args()
 
+    args.launcher = 'pytorch'
+    args.validate = True
+    args.test_last = True
+    args.test_best = True
+    args.deterministic = False
+    args.seed = None
+    args.config = 'configs/posec3d/slowonly_r50_gym/joint.py'
+
     cfg = Config.fromfile(args.config)
 
-    # work_dir is determined in this priority:
-    # config file > default (base filename)
     if cfg.get('work_dir', None) is None:
-        # use config filename as default work_dir if cfg.work_dir is None
         cfg.work_dir = osp.join('./work_dirs', osp.splitext(osp.basename(args.config))[0])
 
     if not hasattr(cfg, 'dist_params'):
         cfg.dist_params = dict(backend='nccl')
 
-    init_dist(args.launcher, **cfg.dist_params)
-    rank, world_size = get_dist_info()
-    cfg.gpu_ids = range(world_size)
+    cfg.gpu_ids = range(1)
 
     auto_resume = cfg.get('auto_resume', True)
     if auto_resume and cfg.get('resume_from', None) is None:
@@ -127,10 +98,7 @@ def main():
 
     test_option = dict(test_last=args.test_last, test_best=args.test_best)
 
-    dist.barrier()
-
     train_model(model, datasets, cfg, validate=args.validate, test=test_option, timestamp=timestamp, meta=meta)
-    dist.barrier()
 
 
 if __name__ == '__main__':
