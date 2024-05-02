@@ -9,7 +9,7 @@ from mmcv import Config
 from mmcv.engine import multi_gpu_test
 from mmcv.fileio.io import file_handlers
 from mmcv.parallel import MMDataParallel
-from mmcv.runner import get_dist_info, init_dist, load_checkpoint
+from mmcv.runner import load_checkpoint
 
 from pyskl.datasets import build_dataloader, build_dataset
 from pyskl.models import build_model
@@ -26,11 +26,6 @@ def parse_args():
         default=None,
         help='output result file in pkl/yaml/json format')
     parser.add_argument(
-        '--fuse-conv-bn',
-        action='store_true',
-        help='Whether to fuse conv and bn, this will slightly increase'
-        'the inference speed')
-    parser.add_argument(
         '--eval',
         type=str,
         nargs='+',
@@ -40,11 +35,6 @@ def parse_args():
     parser.add_argument(
         '--tmpdir',
         help='tmp directory used for collecting results from multiple workers')
-    parser.add_argument(
-        '--average-clips',
-        choices=['score', 'prob', None],
-        default=None,
-        help='average type when averaging test clips')
     parser.add_argument(
         '--launcher',
         choices=['pytorch', 'slurm'],
@@ -57,8 +47,6 @@ def parse_args():
     parser.add_argument('--local_rank', type=int, default=-1)
     parser.add_argument('--local-rank', type=int, default=-1)
     args = parser.parse_args()
-    if 'LOCAL_RANK' not in os.environ:
-        os.environ['LOCAL_RANK'] = str(args.local_rank)
     return args
 
 
@@ -101,9 +89,7 @@ def main():
     if not hasattr(cfg, 'dist_params'):
         cfg.dist_params = dict(backend='nccl')
 
-    init_dist(args.launcher, **cfg.dist_params)
-    rank, world_size = get_dist_info()
-    cfg.gpu_ids = range(world_size)
+    cfg.gpu_ids = range(1)
 
     # build the dataloader
     dataset = build_dataset(cfg.data.test, dict(test_mode=True))
@@ -114,17 +100,15 @@ def main():
     dataloader_setting = dict(dataloader_setting, **cfg.data.get('test_dataloader', {}))
     data_loader = build_dataloader(dataset, **dataloader_setting)
 
-    dist.barrier()
     outputs = inference_pytorch(args, cfg, data_loader)
 
     print(f'\nwriting results to {out}')
     dataset.dump_results(outputs, out=out)
+
     if eval_cfg:
         eval_res = dataset.evaluate(outputs, **eval_cfg)
         for name, val in eval_res.items():
             print(f'{name}: {val:.04f}')
-
-    dist.barrier()
 
 
 if __name__ == '__main__':
