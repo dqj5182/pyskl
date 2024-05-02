@@ -2,9 +2,7 @@
 # flake8: noqa: E722
 import argparse
 import mmcv
-import os
 import os.path as osp
-import torch.distributed as dist
 from mmcv import Config
 from mmcv.engine import multi_gpu_test
 from mmcv.fileio.io import file_handlers
@@ -19,30 +17,11 @@ from pyskl.utils import cache_checkpoint
 def parse_args():
     parser = argparse.ArgumentParser(
         description='pyskl test (and eval) a model')
-    parser.add_argument('config', help='test config file path')
     parser.add_argument('-C', '--checkpoint', help='checkpoint file', default=None)
     parser.add_argument(
         '--out',
         default=None,
         help='output result file in pkl/yaml/json format')
-    parser.add_argument(
-        '--eval',
-        type=str,
-        nargs='+',
-        default=['top_k_accuracy', 'mean_class_accuracy'],
-        help='evaluation metrics, which depends on the dataset, e.g.,'
-        ' "top_k_accuracy", "mean_class_accuracy" for video dataset')
-    parser.add_argument(
-        '--launcher',
-        choices=['pytorch', 'slurm'],
-        default='pytorch',
-        help='job launcher')
-    parser.add_argument(
-        '--compile',
-        action='store_true',
-        help='whether to compile the model before training / testing (only available in pytorch 2.0)')
-    parser.add_argument('--local_rank', type=int, default=-1)
-    parser.add_argument('--local-rank', type=int, default=-1)
     args = parser.parse_args()
     return args
 
@@ -66,8 +45,10 @@ def main():
     args = parse_args()
 
     args.launcher = 'pytorch'
+    args.eval = ['top_k_accuracy', 'mean_class_accuracy']
 
-    cfg = Config.fromfile(args.config)
+    config_path = 'configs/posec3d/slowonly_r50_gym/joint.py'
+    cfg = Config.fromfile(config_path)
 
     out = osp.join(cfg.work_dir, 'result.pkl') if args.out is None else args.out
 
