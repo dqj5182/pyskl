@@ -1,27 +1,15 @@
 # flake8: noqa: F401, F403
-import abc
-import argparse
-import collections
-import cv2
 import json
-import multiprocessing as mp
 import numpy as np
 import os
 import os.path as osp
 import pickle
 import random as rd
 import requests
-import shutil
-import string
 import subprocess
-import sys
 import time
-import warnings
-from collections import OrderedDict, defaultdict
-from functools import reduce
+from collections import defaultdict
 from fvcore.nn import FlopCountAnalysis, parameter_count
-from multiprocessing import Pool, current_process
-from tqdm import tqdm
 
 try:
     import decord
