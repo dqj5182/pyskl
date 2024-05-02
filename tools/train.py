@@ -23,12 +23,6 @@ def parse_args():
 
 def main():
     args = parse_args()
-
-    args.launcher = 'pytorch'
-    args.validate = True
-    args.test_last = True
-    args.test_best = True
-    args.deterministic = False
     args.config = 'configs/posec3d/slowonly_r50_gym/joint.py'
 
     cfg = Config.fromfile(args.config)
@@ -70,7 +64,7 @@ def main():
 
     # set random seeds
     seed = 1004
-    set_random_seed(seed, deterministic=args.deterministic)
+    set_random_seed(seed, deterministic=False)
 
     cfg.seed = seed
     meta['seed'] = seed
@@ -89,11 +83,9 @@ def main():
             pyskl_version=__version__ + get_git_hash(digits=7),
             config=cfg.pretty_text)
 
-    test_option = dict(test_last=args.test_last, test_best=args.test_best)
+    test_option = dict(test_last=True, test_best=True)
 
-    import pdb; pdb.set_trace()
-
-    train_model(model, datasets, cfg, validate=args.validate, test=test_option, timestamp=timestamp, meta=meta)
+    train_model(model, datasets, cfg, validate=True, test=test_option, timestamp=timestamp, meta=meta)
 
 
 if __name__ == '__main__':
