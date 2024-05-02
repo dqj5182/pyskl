@@ -1,4 +1,4 @@
-# PYSKL: Train and demo your action recognition videos as you want
+# Train and demo your action recognition videos as you want
 
 
 ## Installation
@@ -10,22 +10,17 @@ conda activate pyskl
 pip install -e .
 ```
 
-## Demo
-
-Check [demo.md](/demo/demo.md).
-
 ## Data Preparation
-
-We provide HRNet 2D skeletons for every dataset we supported and Kinect 3D skeletons for the NTURGB+D and NTURGB+D 120 dataset. To obtain the human skeleton annotations, you can:
-
-1. Use our pre-processed skeleton annotations: we directly provide the processed skeleton data for all datasets as pickle files (which can be directly used for training and testing), check [Data Doc](/tools/data/README.md) for the download links and descriptions of the annotation format.
-2. For NTURGB+D 3D skeletons, you can download the official annotations from https://github.com/shahroudy/NTURGB-D, and use our [provided script](/tools/data/ntu_preproc.py) to generate the processed pickle files. The generated files are the same with the provided `ntu60_3danno.pkl` and `ntu120_3danno.pkl`. For detailed instructions, follow the [Data Doc](/tools/data/README.md).
-3. We also provide scripts to extract 2D HRNet skeletons from RGB videos, you can follow the [diving48_example](/examples/extract_diving48_skeleton/diving48_example.ipynb) to extract 2D skeletons from an arbitrary RGB video dataset.
-
-You can use [vis_skeleton](/demo/vis_skeleton.ipynb) to visualize the provided skeleton data.
+For GYM dataset, please download 2D pose annotations:
+```shell
+mkdir data
+cd data
+mkdir gym
+cd gym
+wget https://download.openmmlab.com/mmaction/pyskl/data/gym/gym_hrnet.pkl
+```
 
 ## Training & Testing
-
 You can use following commands for training and testing. Basically, we support distributed training on a single server with multiple GPUs.
 ```shell
 # Training
@@ -38,10 +33,10 @@ bash tools/dist_test.sh {config_name} {checkpoint} {num_gpus} --out {output_file
 For example,
 ```shell
 # Training
-bash tools/dist_train.sh configs/posec3d/slowonly_r50_gym/joint.py 8 --validate --test-last --test-best
+bash tools/dist_train.sh configs/posec3d/slowonly_r50_gym/joint.py 2 --validate --test-last --test-best
 
 # Testing
-bash tools/dist_test.sh configs/posec3d/slowonly_r50_gym/joint.py checkpoints/SOME_CHECKPOINT.pth 8 --eval top_k_accuracy mean_class_accuracy --out result.pkl
+bash tools/dist_test.sh configs/posec3d/slowonly_r50_gym/joint.py checkpoints/FineGYM/SlowOnly-R50/joint.pth 1 --eval top_k_accuracy mean_class_accuracy --out result.pkl
 ```
 
 ## Citation
@@ -58,12 +53,5 @@ If you use PYSKL in your research or wish to refer to the baseline results publi
 }
 ```
 
-## Contributing
-
-PYSKL is an OpenSource Project under the Apache2 license. Any contribution from the community to improve PYSKL is appreciated. For **significant** contributions (like supporting a novel & important task), a corresponding part will be added to our updated tech report, while the contributor will also be added to the author list.
-
-Any user can open a PR to contribute to PYSKL. The PR will be reviewed before being merged into the master branch. If you want to open a **large** PR in PYSKL, you are recommended to first reach me (via my email dhd.efz@gmail.com) to discuss the design, which helps to save large amounts of time in the reviewing stage.
-
-## Contact
-
-For any questions, feel free to contact: dhd.efz@gmail.com
+## Acknowledgement
+This code is mostly based on [PYSKL](https://github.com/kennymckormick/pyskl).
