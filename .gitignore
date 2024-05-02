@@ -115,12 +115,12 @@ work_dirs/
 *.mdb
 
 # avoid soft links created by MIM
-pyskl/assets/*
-pyskl/tools/*
+lib/assets/*
+lib/tools/*
 
 # unignore ipython notebook files in demo
 !demo/*.ipynb
-pyskl/.mim
+lib/.mim
 .VScodeCounter
 tmp/*
 

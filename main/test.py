@@ -9,9 +9,9 @@ from mmcv.fileio.io import file_handlers
 from mmcv.parallel import MMDataParallel
 from mmcv.runner import load_checkpoint
 
-from pyskl.datasets import build_dataloader, build_dataset
-from pyskl.models import build_model
-from pyskl.utils import cache_checkpoint
+from lib.datasets import build_dataloader, build_dataset
+from lib.models import build_model
+from lib.utils import cache_checkpoint
 
 
 def parse_args():

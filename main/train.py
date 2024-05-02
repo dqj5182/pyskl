@@ -8,11 +8,11 @@ from mmcv import Config
 from mmcv.runner import set_random_seed
 from mmcv.utils import get_git_hash
 
-from pyskl import __version__
-from pyskl.apis import train_model
-from pyskl.datasets import build_dataset
-from pyskl.models import build_model
-from pyskl.utils import collect_env, get_root_logger
+from lib import __version__
+from lib.apis import train_model
+from lib.datasets import build_dataset
+from lib.models import build_model
+from lib.utils import collect_env, get_root_logger
 
 
 def parse_args():
