@@ -8,8 +8,6 @@ from mmcv.runner import get_dist_info
 from mmcv.utils import Registry, build_from_cfg, digit_version
 from torch.utils.data import DataLoader
 
-from .samplers import DistributedSampler
-
 # https://github.com/pytorch/pytorch/issues/973
 import resource
 rlimit = resource.getrlimit(resource.RLIMIT_NOFILE)
@@ -75,8 +73,6 @@ def build_dataloader(dataset,
     """
     rank, world_size = get_dist_info()
 
-    sampler = DistributedSampler(
-        dataset, world_size, rank, shuffle=shuffle, seed=seed)
     shuffle = False
     batch_size = videos_per_gpu
     num_workers = workers_per_gpu
@@ -91,7 +87,6 @@ def build_dataloader(dataset,
     data_loader = DataLoader(
         dataset,
         batch_size=batch_size,
-        sampler=sampler,
         num_workers=num_workers,
         collate_fn=partial(collate, samples_per_gpu=videos_per_gpu),
         pin_memory=pin_memory,

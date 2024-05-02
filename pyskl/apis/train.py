@@ -102,10 +102,7 @@ def train_model(model,
     # an ugly workaround to make .log and .log.json filenames the same
     runner.timestamp = timestamp
 
-    if 'type' not in cfg.optimizer_config:
-        optimizer_config = OptimizerHook(**cfg.optimizer_config)
-    else:
-        optimizer_config = cfg.optimizer_config
+    optimizer_config = OptimizerHook(**cfg.optimizer_config)
 
     # register hooks
     runner.register_training_hooks(cfg.lr_config, optimizer_config,
