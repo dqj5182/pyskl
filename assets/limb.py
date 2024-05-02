@@ -83,4 +83,4 @@ evaluation = dict(interval=1, metrics=['top_k_accuracy', 'mean_class_accuracy'],
 log_config = dict(interval=20, hooks=[dict(type='TextLoggerHook')])
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
-work_dir = './work_dirs/posec3d/slowonly_r50_gym/limb'
+work_dir = './experiments/limb'

@@ -103,7 +103,7 @@ venv.bak/
 *.pkl.json
 *.log.json
 benchlist.txt
-work_dirs/
+experiments/
 .cache/
 
 # Profile
