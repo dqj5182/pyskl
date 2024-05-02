@@ -1,7 +1,6 @@
 # PYSKL: Train and demo your action recognition videos as you want
 
 
-
 ## Installation
 ```shell
 git clone https://github.com/kennymckormick/pyskl.git
@@ -31,10 +30,19 @@ You can use following commands for training and testing. Basically, we support d
 ```shell
 # Training
 bash tools/dist_train.sh {config_name} {num_gpus} {other_options}
+
 # Testing
 bash tools/dist_test.sh {config_name} {checkpoint} {num_gpus} --out {output_file} --eval top_k_accuracy mean_class_accuracy
 ```
-For specific examples, please go to the README for each specific algorithm we supported.
+
+For example,
+```shell
+# Training
+bash tools/dist_train.sh configs/posec3d/slowonly_r50_gym/joint.py 8 --validate --test-last --test-best
+
+# Testing
+bash tools/dist_test.sh configs/posec3d/slowonly_r50_gym/joint.py checkpoints/SOME_CHECKPOINT.pth 8 --eval top_k_accuracy mean_class_accuracy --out result.pkl
+```
 
 ## Citation
 
