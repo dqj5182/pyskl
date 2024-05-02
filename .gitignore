@@ -15,7 +15,6 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
 lib64/
 parts/
 sdist/
@@ -115,12 +114,9 @@ work_dirs/
 *.mdb
 
 # avoid soft links created by MIM
-lib/assets/*
-lib/tools/*
 
 # unignore ipython notebook files in demo
 !demo/*.ipynb
-lib/.mim
 .VScodeCounter
 tmp/*
 
