@@ -2,7 +2,6 @@
 # flake8: noqa: E722
 import argparse
 import mmcv
-import os
 import os.path as osp
 import time
 from mmcv import Config
@@ -10,7 +9,7 @@ from mmcv.runner import set_random_seed
 from mmcv.utils import get_git_hash
 
 from pyskl import __version__
-from pyskl.apis import init_random_seed, train_model
+from pyskl.apis import train_model
 from pyskl.datasets import build_dataset
 from pyskl.models import build_model
 from pyskl.utils import collect_env, get_root_logger
@@ -19,7 +18,6 @@ from pyskl.utils import collect_env, get_root_logger
 def parse_args():
     parser = argparse.ArgumentParser(description='Train a recognizer')
     args = parser.parse_args()
-
     return args
 
 
@@ -31,7 +29,6 @@ def main():
     args.test_last = True
     args.test_best = True
     args.deterministic = False
-    args.seed = None
     args.config = 'configs/posec3d/slowonly_r50_gym/joint.py'
 
     cfg = Config.fromfile(args.config)
@@ -59,8 +56,6 @@ def main():
     log_file = osp.join(cfg.work_dir, f'{timestamp}.log')
     logger = get_root_logger(log_file=log_file, log_level=cfg.get('log_level', 'INFO'))
 
-    # init the meta dict to record some important information such as
-    # environment info and seed, which will be logged
     meta = dict()
     # log env info
     env_info_dict = collect_env()
@@ -74,8 +69,7 @@ def main():
     logger.info(f'Config: {cfg.pretty_text}')
 
     # set random seeds
-    seed = init_random_seed(args.seed)
-    logger.info(f'Set random seed to {seed}, deterministic: {args.deterministic}')
+    seed = 1004
     set_random_seed(seed, deterministic=args.deterministic)
 
     cfg.seed = seed
@@ -89,14 +83,15 @@ def main():
 
     cfg.workflow = cfg.get('workflow', [('train', 1)])
     assert len(cfg.workflow) == 1
+
     if cfg.checkpoint_config is not None:
-        # save pyskl version, config file content and class names in
-        # checkpoints as meta data
         cfg.checkpoint_config.meta = dict(
             pyskl_version=__version__ + get_git_hash(digits=7),
             config=cfg.pretty_text)
 
     test_option = dict(test_last=args.test_last, test_best=args.test_best)
+
+    import pdb; pdb.set_trace()
 
     train_model(model, datasets, cfg, validate=args.validate, test=test_option, timestamp=timestamp, meta=meta)
 

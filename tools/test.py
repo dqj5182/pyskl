@@ -1,7 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 # flake8: noqa: E722
 import argparse
-import mmcv
+import os
 import os.path as osp
 from mmcv import Config
 from mmcv.engine import multi_gpu_test
@@ -47,7 +47,7 @@ def main():
     config_path = 'configs/posec3d/slowonly_r50_gym/joint.py'
     cfg = Config.fromfile(config_path)
 
-    out = osp.join(cfg.work_dir, 'result.pkl') if args.out is None else args.out
+    out = osp.join(cfg.work_dir, 'result.pkl')
 
     # Load eval_config from cfg
     eval_cfg = cfg.get('evaluation', {})
@@ -57,7 +57,9 @@ def main():
     if args.eval:
         eval_cfg['metrics'] = args.eval
 
-    mmcv.mkdir_or_exist(osp.dirname(out))
+    if not os.path.exists(osp.dirname(out)):
+        os.makedirs(osp.dirname(out))
+    # mmcv.mkdir_or_exist(osp.dirname(out))
     _, suffix = osp.splitext(out)
     assert suffix[1:] in file_handlers, ('The format of the output file should be json, pickle or yaml')
 
