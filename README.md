@@ -1,5 +1,5 @@
-# Train and demo your action recognition videos as you want
-
+# Action Recognition
+Train and demo your action recognition videos as you want
 
 ## Installation
 ```shell
