@@ -23,7 +23,7 @@ def parse_args():
 
 def main():
     args = parse_args()
-    args.config = 'assets/posec3d/slowonly_r50_gym/joint.py'
+    args.config = 'assets/joint.py'
 
     cfg = Config.fromfile(args.config)
     cfg.dist_params = dict(backend='nccl')
