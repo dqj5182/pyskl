@@ -27,7 +27,7 @@ You can use following commands for training and testing.
 CUDA_VISIBLE_DEVICES=0 python tools/train.py
 
 # Testing
-CUDA_VISIBLE_DEVICES=0 python tools/test.py --checkpoint checkpoints/FineGYM/SlowOnly-R50/joint.pth
+CUDA_VISIBLE_DEVICES=2 python tools/test.py --checkpoint checkpoints/FineGYM/SlowOnly-R50/joint.pth
 ```
 
 ## Acknowledgement

@@ -1,6 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import numpy as np
-import platform
 import random
 import torch
 from functools import partial
@@ -9,15 +8,14 @@ from mmcv.runner import get_dist_info
 from mmcv.utils import Registry, build_from_cfg, digit_version
 from torch.utils.data import DataLoader
 
-from .samplers import ClassSpecificDistributedSampler, DistributedSampler
+from .samplers import DistributedSampler
 
-if platform.system() != 'Windows':
-    # https://github.com/pytorch/pytorch/issues/973
-    import resource
-    rlimit = resource.getrlimit(resource.RLIMIT_NOFILE)
-    hard_limit = rlimit[1]
-    soft_limit = min(4096, hard_limit)
-    resource.setrlimit(resource.RLIMIT_NOFILE, (soft_limit, hard_limit))
+# https://github.com/pytorch/pytorch/issues/973
+import resource
+rlimit = resource.getrlimit(resource.RLIMIT_NOFILE)
+hard_limit = rlimit[1]
+soft_limit = min(4096, hard_limit)
+resource.setrlimit(resource.RLIMIT_NOFILE, (soft_limit, hard_limit))
 
 DATASETS = Registry('dataset')
 PIPELINES = Registry('pipeline')
@@ -77,17 +75,8 @@ def build_dataloader(dataset,
     """
     rank, world_size = get_dist_info()
 
-    if hasattr(dataset, 'class_prob') and dataset.class_prob is not None:
-        sampler = ClassSpecificDistributedSampler(
-            dataset,
-            world_size,
-            rank,
-            class_prob=dataset.class_prob,
-            shuffle=shuffle,
-            seed=seed)
-    else:
-        sampler = DistributedSampler(
-            dataset, world_size, rank, shuffle=shuffle, seed=seed)
+    sampler = DistributedSampler(
+        dataset, world_size, rank, shuffle=shuffle, seed=seed)
     shuffle = False
     batch_size = videos_per_gpu
     num_workers = workers_per_gpu
