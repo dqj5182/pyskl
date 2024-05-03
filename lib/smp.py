@@ -5,16 +5,6 @@ import os.path as osp
 import requests
 
 
-def ls(dirname='.', full=True, match=''):
-    if not full or dirname == '.':
-        ans = os.listdir(dirname)
-    ans = [osp.join(dirname, x) for x in os.listdir(dirname)]
-    ans = [x for x in ans if match in x]
-    return ans
-
-def add(x, y):
-    return x + y
-
 def intop(pred, label, n):
     pred = [np.argsort(x)[-n:] for x in pred]
     hit = [(l in p) for l, p in zip(label, pred)]

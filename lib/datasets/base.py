@@ -151,6 +151,7 @@ class BaseDataset(Dataset, metaclass=ABCMeta):
                 eval_results_cur = self.evaluate(results_cur, metrics, metric_options, logger, **deprecated_kwargs)
                 eval_results.update({f'{key}_{k}': v for k, v in eval_results_cur.items()})
             # Ad-hoc for RGBPoseConv3D
+            
             if len(results[0]) == 2 and 'rgb' in results[0] and 'pose' in results[0]:
                 rgb = [x['rgb'] for x in results]
                 pose = [x['pose'] for x in results]
