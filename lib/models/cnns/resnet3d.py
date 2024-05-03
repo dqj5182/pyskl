@@ -68,7 +68,7 @@ class BasicBlock3d(nn.Module):
         )
 
         self.downsample = downsample
-        self.relu = nn.ReLU(inplace=True) #build_activation_layer(self.act_cfg)
+        self.relu = nn.ReLU(inplace=True)
 
     def forward(self, x):
         """Defines the computation performed at every call."""
@@ -172,7 +172,7 @@ class Bottleneck3d(nn.Module):
         )
 
         self.downsample = downsample
-        self.relu = nn.ReLU(inplace=True) #build_activation_layer(self.act_cfg)
+        self.relu = nn.ReLU(inplace=True)
 
     def forward(self, x):
         """Defines the computation performed at every call."""
@@ -482,7 +482,6 @@ class ResNet3d(nn.Module):
                 debugging information.
         """
 
-        # state_dict_r2d = _load_checkpoint(self.pretrained)
         state_dict_r2d = torch.load(self.pretrained)
         if 'state_dict' in state_dict_r2d:
             state_dict_r2d = state_dict_r2d['state_dict']
