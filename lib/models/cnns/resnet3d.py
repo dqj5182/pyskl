@@ -596,7 +596,6 @@ class ResNet3d(nn.Module):
         self._init_weights(self, pretrained)
 
     def forward(self, x):
-        import pdb; pdb.set_trace()
         """Defines the computation performed at every call.
 
         Args:
