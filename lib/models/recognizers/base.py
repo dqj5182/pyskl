@@ -1,5 +1,4 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-import functools
 import torch
 import torch.distributed as dist
 import torch.nn as nn
@@ -8,13 +7,6 @@ from abc import ABCMeta, abstractmethod
 from collections import OrderedDict
 
 from .. import builder
-
-
-def rgetattr(obj, attr, *args):
-    def _getattr(obj, attr):
-        return getattr(obj, attr, *args)
-
-    return functools.reduce(_getattr, [obj] + attr.split('.'))
 
 
 class BaseRecognizer(nn.Module, metaclass=ABCMeta):
