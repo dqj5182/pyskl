@@ -34,6 +34,7 @@ CUDA_VISIBLE_DEVICES=2 python main/test.py --checkpoint checkpoints/FineGYM/Slow
 1. Train model to check whether model can be trained well
 2. Visualize test output
 3. Demo code for any video input
+4. Simplify train.py and test.py
 
 ## Acknowledgement
 This code is mostly based on [PYSKL](https://github.com/kennymckormick/pyskl).
