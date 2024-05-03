@@ -3,7 +3,6 @@ import numpy as np
 import os
 import os.path as osp
 import time
-import torch
 from mmcv.engine import multi_gpu_test
 from mmcv.parallel import MMDataParallel
 from mmcv.runner import EpochBasedRunner, OptimizerHook, build_optimizer, get_dist_info
