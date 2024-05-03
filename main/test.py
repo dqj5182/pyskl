@@ -40,7 +40,6 @@ def inference_pytorch(args, cfg, data_loader):
 def main():
     args = parse_args()
 
-    args.launcher = 'pytorch'
     args.eval = ['top_k_accuracy', 'mean_class_accuracy']
     args.out = 'result.pkl'
 
@@ -59,7 +58,7 @@ def main():
 
     if not os.path.exists(osp.dirname(out)):
         os.makedirs(osp.dirname(out))
-    # mmcv.mkdir_or_exist(osp.dirname(out))
+
     _, suffix = osp.splitext(out)
     assert suffix[1:] in file_handlers, ('The format of the output file should be json, pickle or yaml')
 
