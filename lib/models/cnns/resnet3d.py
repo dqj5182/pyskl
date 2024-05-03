@@ -163,23 +163,15 @@ class Bottleneck3d(nn.Module):
             nn.ReLU(inplace=True)
         )
 
-        self.conv3 = ConvModule(
-            planes,
+        from collections import OrderedDict
+        self.conv3 = nn.Sequential(OrderedDict([('conv', nn.Conv3d(
+            planes, 
             planes * self.expansion,
             1,
             bias=False,
-            conv_cfg=self.conv_cfg,
-            norm_cfg=self.norm_cfg,
-            # No activation in the third ConvModule for bottleneck
-            act_cfg=None)
-        # self.conv3 = nn.Sequential(nn.Conv3d(
-        #     planes, 
-        #     planes * self.expansion,
-        #     1,
-        #     bias=False,
-        #     ),
-        #     nn.BatchNorm3d(planes * self.expansion)
-        # )
+            )),
+            ('bn', nn.BatchNorm3d(planes * self.expansion))])
+        )
 
         self.downsample = downsample
         self.relu = build_activation_layer(self.act_cfg)
@@ -372,15 +364,6 @@ class ResNet3d(nn.Module):
         downsample = None
         if stride[1] != 1 or inplanes != planes * block.expansion:
             if advanced:
-                # conv = ConvModule(
-                #     inplanes,
-                #     planes * block.expansion,
-                #     kernel_size=1,
-                #     stride=1,
-                #     bias=False,
-                #     conv_cfg=conv_cfg,
-                #     norm_cfg=norm_cfg,
-                #     act_cfg=None)
                 conv = nn.Sequential(nn.Conv3d(
                     inplanes, 
                     planes * block.expansion,
@@ -510,14 +493,10 @@ class ResNet3d(nn.Module):
             if isinstance(module, ConvModule):
                 # we use a ConvModule to wrap conv+bn+relu layers, thus the name mapping is needed
                 if 'downsample' in name:
-                    # layer{X}.{Y}.downsample.conv->layer{X}.{Y}.downsample.0
                     original_conv_name = name + '.0'
-                    # layer{X}.{Y}.downsample.bn->layer{X}.{Y}.downsample.1
                     original_bn_name = name + '.1'
                 else:
-                    # layer{X}.{Y}.conv{n}.conv->layer{X}.{Y}.conv{n}
                     original_conv_name = name
-                    # layer{X}.{Y}.conv{n}.bn->layer{X}.{Y}.bn{n}
                     original_bn_name = name.replace('conv', 'bn')
                 if original_conv_name + '.weight' not in state_dict_r2d:
                     logger.warning(f'Module not exist in the state_dict_r2d: {original_conv_name}')
@@ -617,6 +596,7 @@ class ResNet3d(nn.Module):
         self._init_weights(self, pretrained)
 
     def forward(self, x):
+        import pdb; pdb.set_trace()
         """Defines the computation performed at every call.
 
         Args:
