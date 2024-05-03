@@ -55,31 +55,6 @@ class ToTensor:
 
 
 @PIPELINES.register_module()
-class Rename:
-    """Rename the key in results.
-
-    Args:
-        mapping (dict): The keys in results that need to be renamed. The key of
-            the dict is the original name, while the value is the new name. If
-            the original name not found in results, do nothing.
-            Default: dict().
-    """
-
-    def __init__(self, mapping):
-        self.mapping = mapping
-
-    def __call__(self, results):
-        for key, value in self.mapping.items():
-            if key in results:
-                assert isinstance(key, str) and isinstance(value, str)
-                assert value not in results, ('the new name already exists in '
-                                              'results')
-                results[value] = results[key]
-                results.pop(key)
-        return results
-
-
-@PIPELINES.register_module()
 class Collect:
     """Collect data from the loader relevant to the specific task.
 
