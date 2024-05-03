@@ -46,27 +46,28 @@ class BasicBlock3d(nn.Module):
         self.norm_cfg = norm_cfg
         self.act_cfg = act_cfg
 
-        self.conv1 = ConvModule(
-            inplanes,
-            planes,
+        self.conv1 = nn.Sequential(nn.Conv3d(
+            inplanes, 
+            planes, 
             3 if self.inflate else (1, 3, 3),
             stride=(self.stride[0], self.stride[1], self.stride[1]),
             padding=1 if self.inflate else (0, 1, 1),
             bias=False,
-            conv_cfg=self.conv_cfg,
-            norm_cfg=self.norm_cfg,
-            act_cfg=self.act_cfg)
+            ),
+            nn.BatchNorm3d(planes),
+            nn.ReLU(inplace=True)
+        )
 
-        self.conv2 = ConvModule(
-            planes,
+        self.conv2 = nn.Sequential(nn.Conv3d(
+            planes, 
             planes * self.expansion,
             3 if self.inflate else (1, 3, 3),
             stride=1,
             padding=1 if self.inflate else (0, 1, 1),
             bias=False,
-            conv_cfg=self.conv_cfg,
-            norm_cfg=self.norm_cfg,
-            act_cfg=None)
+            ),
+            nn.BatchNorm3d(planes)
+        )
 
         self.downsample = downsample
         self.relu = build_activation_layer(self.act_cfg)
@@ -138,27 +139,29 @@ class Bottleneck3d(nn.Module):
         conv2_kernel_size = {'no_inflate': (1, 3, 3), '3x1x1': (1, 3, 3), '3x3x3': 3}
         conv2_padding = {'no_inflate': (0, 1, 1), '3x1x1': (0, 1, 1), '3x3x3': 1}
 
-        self.conv1 = ConvModule(
-            inplanes,
-            planes,
+        self.conv1 = nn.Sequential(nn.Conv3d(
+            inplanes, 
+            planes, 
             conv1_kernel_size[mode],
             stride=1,
             padding=conv1_padding[mode],
             bias=False,
-            conv_cfg=self.conv_cfg,
-            norm_cfg=self.norm_cfg,
-            act_cfg=self.act_cfg)
-
-        self.conv2 = ConvModule(
-            planes,
-            planes,
+            ),
+            nn.BatchNorm3d(planes),
+            nn.ReLU(inplace=True)
+        )
+        
+        self.conv2 = nn.Sequential(nn.Conv3d(
+            planes, 
+            planes, 
             conv2_kernel_size[mode],
             stride=(self.stride[0], self.stride[1], self.stride[1]),
             padding=conv2_padding[mode],
             bias=False,
-            conv_cfg=self.conv_cfg,
-            norm_cfg=self.norm_cfg,
-            act_cfg=self.act_cfg)
+            ),
+            nn.BatchNorm3d(planes),
+            nn.ReLU(inplace=True)
+        )
 
         self.conv3 = ConvModule(
             planes,
@@ -169,6 +172,14 @@ class Bottleneck3d(nn.Module):
             norm_cfg=self.norm_cfg,
             # No activation in the third ConvModule for bottleneck
             act_cfg=None)
+        # self.conv3 = nn.Sequential(nn.Conv3d(
+        #     planes, 
+        #     planes * self.expansion,
+        #     1,
+        #     bias=False,
+        #     ),
+        #     nn.BatchNorm3d(planes * self.expansion)
+        # )
 
         self.downsample = downsample
         self.relu = build_activation_layer(self.act_cfg)
@@ -361,30 +372,40 @@ class ResNet3d(nn.Module):
         downsample = None
         if stride[1] != 1 or inplanes != planes * block.expansion:
             if advanced:
-                conv = ConvModule(
-                    inplanes,
+                # conv = ConvModule(
+                #     inplanes,
+                #     planes * block.expansion,
+                #     kernel_size=1,
+                #     stride=1,
+                #     bias=False,
+                #     conv_cfg=conv_cfg,
+                #     norm_cfg=norm_cfg,
+                #     act_cfg=None)
+                conv = nn.Sequential(nn.Conv3d(
+                    inplanes, 
                     planes * block.expansion,
                     kernel_size=1,
                     stride=1,
                     bias=False,
-                    conv_cfg=conv_cfg,
-                    norm_cfg=norm_cfg,
-                    act_cfg=None)
+                    ),
+                    nn.BatchNorm3d(planes * block.expansion),
+                )
+
                 pool = nn.AvgPool3d(
                     kernel_size=(stride[0], stride[1], stride[1]),
                     stride=(stride[0], stride[1], stride[1]),
                     ceil_mode=True)
                 downsample = nn.Sequential(conv, pool)
             else:
-                downsample = ConvModule(
-                    inplanes,
+                downsample = nn.Sequential(nn.Conv3d(
+                    inplanes, 
                     planes * block.expansion,
                     kernel_size=1,
                     stride=(stride[0], stride[1], stride[1]),
                     bias=False,
-                    conv_cfg=conv_cfg,
-                    norm_cfg=norm_cfg,
-                    act_cfg=None)
+                    ),
+                    nn.BatchNorm3d(planes * block.expansion)
+                )
 
         layers = []
         layers.append(
@@ -527,16 +548,17 @@ class ResNet3d(nn.Module):
     def _make_stem_layer(self):
         """Construct the stem layers consists of a conv+norm+act module and a
         pooling layer."""
-        self.conv1 = ConvModule(
+        self.conv1 = nn.Sequential(nn.Conv3d(
             self.in_channels,
             self.base_channels,
             kernel_size=self.conv1_kernel,
             stride=(self.conv1_stride[0], self.conv1_stride[1], self.conv1_stride[1]),
             padding=tuple([(k - 1) // 2 for k in _triple(self.conv1_kernel)]),
             bias=False,
-            conv_cfg=self.conv_cfg,
-            norm_cfg=self.norm_cfg,
-            act_cfg=self.act_cfg)
+            ),
+            nn.BatchNorm3d(self.base_channels),
+            nn.ReLU(inplace=True)
+        )
 
         self.maxpool = nn.MaxPool3d(
             kernel_size=(1, 3, 3),

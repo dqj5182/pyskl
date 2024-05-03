@@ -3,11 +3,10 @@
 import copy
 import mmcv
 import numpy as np
-import os.path as osp
 import torch
 import warnings
 from abc import ABCMeta, abstractmethod
-from collections import OrderedDict, defaultdict
+from collections import OrderedDict
 from mmcv.utils import print_log
 from torch.utils.data import Dataset
 
@@ -74,31 +73,6 @@ class BaseDataset(Dataset, metaclass=ABCMeta):
     @abstractmethod
     def load_annotations(self):
         """Load the annotation according to ann_file into video_infos."""
-
-    # json annotations already looks like video_infos, so for each dataset,
-    # this func should be the same
-    def load_json_annotations(self):
-        """Load json annotation file to get video information."""
-        video_infos = mmcv.load(self.ann_file)
-        num_videos = len(video_infos)
-        path_key = 'frame_dir' if 'frame_dir' in video_infos[0] else 'filename'
-        for i in range(num_videos):
-            path_value = video_infos[i][path_key]
-            path_value = osp.join(self.data_prefix, path_value)
-            video_infos[i][path_key] = path_value
-            if self.multi_class:
-                assert self.num_classes is not None
-            else:
-                assert len(video_infos[i]['label']) == 1
-                video_infos[i]['label'] = video_infos[i]['label'][0]
-        return video_infos
-
-    def parse_by_class(self):
-        video_infos_by_class = defaultdict(list)
-        for item in self.video_infos:
-            label = item['label']
-            video_infos_by_class[label].append(item)
-        return video_infos_by_class
 
     @staticmethod
     def label2array(num, label):
