@@ -1,10 +1,12 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-import torch
 import torch.nn as nn
 import warnings
-from torch.nn.modules.batchnorm import _BatchNorm
+from mmcv.cnn import ConvModule, build_activation_layer, constant_init, kaiming_init
+from mmcv.runner import _load_checkpoint, load_checkpoint
+from mmcv.utils import _BatchNorm
 from torch.nn.modules.utils import _ntuple, _triple
 
+from ...utils import cache_checkpoint, get_root_logger
 from ..builder import BACKBONES
 
 
@@ -44,31 +46,30 @@ class BasicBlock3d(nn.Module):
         self.norm_cfg = norm_cfg
         self.act_cfg = act_cfg
 
-        self.conv1 = nn.Sequential(nn.Conv3d(
-            inplanes, 
-            planes, 
+        self.conv1 = ConvModule(
+            inplanes,
+            planes,
             3 if self.inflate else (1, 3, 3),
             stride=(self.stride[0], self.stride[1], self.stride[1]),
             padding=1 if self.inflate else (0, 1, 1),
             bias=False,
-            ),
-            nn.BatchNorm3d(planes),
-            nn.ReLU(inplace=True)
-        )
+            conv_cfg=self.conv_cfg,
+            norm_cfg=self.norm_cfg,
+            act_cfg=self.act_cfg)
 
-        self.conv2 = nn.Sequential(nn.Conv3d(
-            planes, 
+        self.conv2 = ConvModule(
+            planes,
             planes * self.expansion,
             3 if self.inflate else (1, 3, 3),
             stride=1,
             padding=1 if self.inflate else (0, 1, 1),
             bias=False,
-            ),
-            nn.BatchNorm3d(planes)
-        )
+            conv_cfg=self.conv_cfg,
+            norm_cfg=self.norm_cfg,
+            act_cfg=None)
 
         self.downsample = downsample
-        self.relu = nn.ReLU(inplace=True)
+        self.relu = build_activation_layer(self.act_cfg)
 
     def forward(self, x):
         """Defines the computation performed at every call."""
@@ -137,42 +138,40 @@ class Bottleneck3d(nn.Module):
         conv2_kernel_size = {'no_inflate': (1, 3, 3), '3x1x1': (1, 3, 3), '3x3x3': 3}
         conv2_padding = {'no_inflate': (0, 1, 1), '3x1x1': (0, 1, 1), '3x3x3': 1}
 
-        self.conv1 = nn.Sequential(nn.Conv3d(
-            inplanes, 
-            planes, 
+        self.conv1 = ConvModule(
+            inplanes,
+            planes,
             conv1_kernel_size[mode],
             stride=1,
             padding=conv1_padding[mode],
             bias=False,
-            ),
-            nn.BatchNorm3d(planes),
-            nn.ReLU(inplace=True)
-        )
-        
-        self.conv2 = nn.Sequential(nn.Conv3d(
-            planes, 
-            planes, 
+            conv_cfg=self.conv_cfg,
+            norm_cfg=self.norm_cfg,
+            act_cfg=self.act_cfg)
+
+        self.conv2 = ConvModule(
+            planes,
+            planes,
             conv2_kernel_size[mode],
             stride=(self.stride[0], self.stride[1], self.stride[1]),
             padding=conv2_padding[mode],
             bias=False,
-            ),
-            nn.BatchNorm3d(planes),
-            nn.ReLU(inplace=True)
-        )
+            conv_cfg=self.conv_cfg,
+            norm_cfg=self.norm_cfg,
+            act_cfg=self.act_cfg)
 
-        from collections import OrderedDict
-        self.conv3 = nn.Sequential(OrderedDict([('conv', nn.Conv3d(
-            planes, 
+        self.conv3 = ConvModule(
+            planes,
             planes * self.expansion,
             1,
             bias=False,
-            )),
-            ('bn', nn.BatchNorm3d(planes * self.expansion))])
-        )
+            conv_cfg=self.conv_cfg,
+            norm_cfg=self.norm_cfg,
+            # No activation in the third ConvModule for bottleneck
+            act_cfg=None)
 
         self.downsample = downsample
-        self.relu = nn.ReLU(inplace=True)
+        self.relu = build_activation_layer(self.act_cfg)
 
     def forward(self, x):
         """Defines the computation performed at every call."""
@@ -362,31 +361,30 @@ class ResNet3d(nn.Module):
         downsample = None
         if stride[1] != 1 or inplanes != planes * block.expansion:
             if advanced:
-                conv = nn.Sequential(nn.Conv3d(
-                    inplanes, 
+                conv = ConvModule(
+                    inplanes,
                     planes * block.expansion,
                     kernel_size=1,
                     stride=1,
                     bias=False,
-                    ),
-                    nn.BatchNorm3d(planes * block.expansion),
-                )
-
+                    conv_cfg=conv_cfg,
+                    norm_cfg=norm_cfg,
+                    act_cfg=None)
                 pool = nn.AvgPool3d(
                     kernel_size=(stride[0], stride[1], stride[1]),
                     stride=(stride[0], stride[1], stride[1]),
                     ceil_mode=True)
                 downsample = nn.Sequential(conv, pool)
             else:
-                downsample = nn.Sequential(nn.Conv3d(
-                    inplanes, 
+                downsample = ConvModule(
+                    inplanes,
                     planes * block.expansion,
                     kernel_size=1,
                     stride=(stride[0], stride[1], stride[1]),
                     bias=False,
-                    ),
-                    nn.BatchNorm3d(planes * block.expansion)
-                )
+                    conv_cfg=conv_cfg,
+                    norm_cfg=norm_cfg,
+                    act_cfg=None)
 
         layers = []
         layers.append(
@@ -482,19 +480,23 @@ class ResNet3d(nn.Module):
                 debugging information.
         """
 
-        state_dict_r2d = torch.load(self.pretrained)
+        state_dict_r2d = _load_checkpoint(self.pretrained)
         if 'state_dict' in state_dict_r2d:
             state_dict_r2d = state_dict_r2d['state_dict']
 
         inflated_param_names = []
         for name, module in self.named_modules():
-            if isinstance(module, nn.Sequential):
+            if isinstance(module, ConvModule):
                 # we use a ConvModule to wrap conv+bn+relu layers, thus the name mapping is needed
                 if 'downsample' in name:
+                    # layer{X}.{Y}.downsample.conv->layer{X}.{Y}.downsample.0
                     original_conv_name = name + '.0'
+                    # layer{X}.{Y}.downsample.bn->layer{X}.{Y}.downsample.1
                     original_bn_name = name + '.1'
                 else:
+                    # layer{X}.{Y}.conv{n}.conv->layer{X}.{Y}.conv{n}
                     original_conv_name = name
+                    # layer{X}.{Y}.conv{n}.bn->layer{X}.{Y}.bn{n}
                     original_bn_name = name.replace('conv', 'bn')
                 if original_conv_name + '.weight' not in state_dict_r2d:
                     logger.warning(f'Module not exist in the state_dict_r2d: {original_conv_name}')
@@ -525,17 +527,16 @@ class ResNet3d(nn.Module):
     def _make_stem_layer(self):
         """Construct the stem layers consists of a conv+norm+act module and a
         pooling layer."""
-        self.conv1 = nn.Sequential(nn.Conv3d(
+        self.conv1 = ConvModule(
             self.in_channels,
             self.base_channels,
             kernel_size=self.conv1_kernel,
             stride=(self.conv1_stride[0], self.conv1_stride[1], self.conv1_stride[1]),
             padding=tuple([(k - 1) // 2 for k in _triple(self.conv1_kernel)]),
             bias=False,
-            ),
-            nn.BatchNorm3d(self.base_channels),
-            nn.ReLU(inplace=True)
-        )
+            conv_cfg=self.conv_cfg,
+            norm_cfg=self.norm_cfg,
+            act_cfg=self.act_cfg)
 
         self.maxpool = nn.MaxPool3d(
             kernel_size=(1, 3, 3),
@@ -567,21 +568,28 @@ class ResNet3d(nn.Module):
         """
         for m in self.modules():
             if isinstance(m, nn.Conv3d):
-                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+                kaiming_init(m)
             elif isinstance(m, _BatchNorm):
-                nn.init.constant_(m.weight, 1)
+                constant_init(m, 1)
 
         if self.zero_init_residual:
             for m in self.modules():
                 if isinstance(m, Bottleneck3d):
-                    if isinstance(m, nn.BatchNorm3d):
-                        nn.init.constant_(m.weight, 0)
+                    constant_init(m.conv3.bn, 0)
                 elif isinstance(m, BasicBlock3d):
-                    if isinstance(m, nn.BatchNorm3d):
-                        nn.init.constant_(m.weight, 0)
+                    constant_init(m.conv2.bn, 0)
 
         if pretrained:
             self.pretrained = pretrained
+        if isinstance(self.pretrained, str):
+            logger = get_root_logger()
+            logger.info(f'load model from: {self.pretrained}')
+
+            if self.pretrained2d:
+                self.inflate_weights(logger)
+            else:
+                self.pretrained = cache_checkpoint(self.pretrained)
+                load_checkpoint(self, self.pretrained, strict=False, logger=logger)
 
     def init_weights(self, pretrained=None):
         self._init_weights(self, pretrained)

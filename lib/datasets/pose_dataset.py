@@ -1,5 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-import pickle
+import mmcv
 import os.path as osp
 
 from ..utils import get_root_logger
@@ -89,8 +89,7 @@ class PoseDataset(BaseDataset):
         return self.load_pkl_annotations()
 
     def load_pkl_annotations(self):
-        with open(self.ann_file, 'rb') as f:
-            data = pickle.load(f)
+        data = mmcv.load(self.ann_file)
 
         if self.split:
             split, data = data['split'], data['annotations']

@@ -1,5 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import torch
+from functools import partial
+from mmcv.parallel import collate
 from mmcv.utils import Registry, build_from_cfg, digit_version
 from torch.utils.data import DataLoader
 
@@ -77,6 +79,7 @@ def build_dataloader(dataset,
         dataset,
         batch_size=batch_size,
         num_workers=num_workers,
+        collate_fn=partial(collate, samples_per_gpu=videos_per_gpu),
         pin_memory=pin_memory,
         shuffle=shuffle,
         drop_last=drop_last,
