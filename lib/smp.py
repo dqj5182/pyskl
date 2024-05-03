@@ -1,7 +1,5 @@
 # flake8: noqa: F401, F403
 import numpy as np
-import os
-import os.path as osp
 import requests
 
 
