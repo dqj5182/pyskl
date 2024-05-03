@@ -1,12 +1,10 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+import torch
 import torch.nn as nn
 import warnings
-from mmcv.cnn import ConvModule, build_activation_layer, constant_init, kaiming_init
-from mmcv.runner import _load_checkpoint, load_checkpoint
-from mmcv.utils import _BatchNorm
+from torch.nn.modules.batchnorm import _BatchNorm
 from torch.nn.modules.utils import _ntuple, _triple
 
-from ...utils import cache_checkpoint, get_root_logger
 from ..builder import BACKBONES
 
 
@@ -70,7 +68,7 @@ class BasicBlock3d(nn.Module):
         )
 
         self.downsample = downsample
-        self.relu = build_activation_layer(self.act_cfg)
+        self.relu = nn.ReLU(inplace=True) #build_activation_layer(self.act_cfg)
 
     def forward(self, x):
         """Defines the computation performed at every call."""
@@ -174,7 +172,7 @@ class Bottleneck3d(nn.Module):
         )
 
         self.downsample = downsample
-        self.relu = build_activation_layer(self.act_cfg)
+        self.relu = nn.ReLU(inplace=True) #build_activation_layer(self.act_cfg)
 
     def forward(self, x):
         """Defines the computation performed at every call."""
@@ -484,13 +482,14 @@ class ResNet3d(nn.Module):
                 debugging information.
         """
 
-        state_dict_r2d = _load_checkpoint(self.pretrained)
+        # state_dict_r2d = _load_checkpoint(self.pretrained)
+        state_dict_r2d = torch.load(self.pretrained)
         if 'state_dict' in state_dict_r2d:
             state_dict_r2d = state_dict_r2d['state_dict']
 
         inflated_param_names = []
         for name, module in self.named_modules():
-            if isinstance(module, ConvModule):
+            if isinstance(module, nn.Sequential):
                 # we use a ConvModule to wrap conv+bn+relu layers, thus the name mapping is needed
                 if 'downsample' in name:
                     original_conv_name = name + '.0'
@@ -569,28 +568,21 @@ class ResNet3d(nn.Module):
         """
         for m in self.modules():
             if isinstance(m, nn.Conv3d):
-                kaiming_init(m)
+                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
             elif isinstance(m, _BatchNorm):
-                constant_init(m, 1)
+                nn.init.constant_(m.weight, 1)
 
         if self.zero_init_residual:
             for m in self.modules():
                 if isinstance(m, Bottleneck3d):
-                    constant_init(m.conv3.bn, 0)
+                    if isinstance(m, nn.BatchNorm3d):
+                        nn.init.constant_(m.weight, 0)
                 elif isinstance(m, BasicBlock3d):
-                    constant_init(m.conv2.bn, 0)
+                    if isinstance(m, nn.BatchNorm3d):
+                        nn.init.constant_(m.weight, 0)
 
         if pretrained:
             self.pretrained = pretrained
-        if isinstance(self.pretrained, str):
-            logger = get_root_logger()
-            logger.info(f'load model from: {self.pretrained}')
-
-            if self.pretrained2d:
-                self.inflate_weights(logger)
-            else:
-                self.pretrained = cache_checkpoint(self.pretrained)
-                load_checkpoint(self, self.pretrained, strict=False, logger=logger)
 
     def init_weights(self, pretrained=None):
         self._init_weights(self, pretrained)
