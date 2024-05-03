@@ -1,10 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-import numpy as np
-import random
 import torch
 from functools import partial
 from mmcv.parallel import collate
-from mmcv.runner import get_dist_info
 from mmcv.utils import Registry, build_from_cfg, digit_version
 from torch.utils.data import DataLoader
 
@@ -71,15 +68,9 @@ def build_dataloader(dataset,
     Returns:
         DataLoader: A PyTorch dataloader.
     """
-    rank, world_size = get_dist_info()
-
     shuffle = False
     batch_size = videos_per_gpu
     num_workers = workers_per_gpu
-
-    init_fn = partial(
-        worker_init_fn, num_workers=num_workers, rank=rank,
-        seed=seed) if seed is not None else None
 
     if digit_version(torch.__version__) >= digit_version('1.8.0'):
         kwargs['persistent_workers'] = persistent_workers
@@ -91,17 +82,7 @@ def build_dataloader(dataset,
         collate_fn=partial(collate, samples_per_gpu=videos_per_gpu),
         pin_memory=pin_memory,
         shuffle=shuffle,
-        worker_init_fn=init_fn,
         drop_last=drop_last,
         **kwargs)
 
     return data_loader
-
-
-def worker_init_fn(worker_id, num_workers, rank, seed):
-    """Init the random seed for various workers."""
-    # The seed of each worker equals to
-    # num_worker * rank + worker_id + user_seed
-    worker_seed = num_workers * rank + worker_id + seed
-    np.random.seed(worker_seed)
-    random.seed(worker_seed)
