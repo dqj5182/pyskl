@@ -103,27 +103,3 @@ class I3DHead(SimpleHead):
                          init_std=init_std,
                          mode='3D',
                          **kwargs)
-
-
-@HEADS.register_module()
-class SlowFastHead(I3DHead):
-    pass
-
-
-@HEADS.register_module()
-class TSNHead(BaseHead):
-
-    def __init__(self,
-                 num_classes,
-                 in_channels,
-                 loss_cls=dict(type='CrossEntropyLoss'),
-                 dropout=0.5,
-                 init_std=0.01,
-                 **kwargs):
-        super().__init__(num_classes,
-                         in_channels,
-                         loss_cls=loss_cls,
-                         dropout=dropout,
-                         init_std=init_std,
-                         mode='2D',
-                         **kwargs)
