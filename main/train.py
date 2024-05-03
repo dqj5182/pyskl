@@ -17,6 +17,7 @@ from lib.utils import collect_env, get_root_logger
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Train a recognizer')
+    parser.add_argument('--gpu', type=str, default='0', help='assign multi-gpus by comma concat')
     args = parser.parse_args()
     return args
 
